@@ -1,0 +1,53 @@
+name: macOS Build and Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Xcode version
+        run: xcodebuild -version
+      - name: Build native macOS app
+        run: >-
+          xcodebuild -project AIAvatar.xcodeproj -scheme AIAvatar
+          -configuration Debug -destination 'platform=macOS'
+          -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO build
+      - name: Run unit tests
+        run: >-
+          xcodebuild -project AIAvatar.xcodeproj -scheme AIAvatar
+          -configuration Debug -destination 'platform=macOS'
+          -derivedDataPath DerivedData -resultBundlePath build/Tests.xcresult
+          CODE_SIGNING_ALLOWED=NO test
+      - name: Build optimized app
+        run: >-
+          xcodebuild -project AIAvatar.xcodeproj -scheme AIAvatar
+          -configuration Release -destination 'generic/platform=macOS'
+          -derivedDataPath DerivedData ARCHS=arm64 ONLY_ACTIVE_ARCH=NO
+          CODE_SIGNING_ALLOWED=NO build
+      - name: Package unsigned Apple Silicon app
+        run: ditto -c -k --sequesterRsrc --keepParent DerivedData/Build/Products/Release/AIAvatar.app build/AIAvatar-macOS-arm64.zip
+      - name: Upload unsigned app
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIAvatar-macOS-arm64-unsigned
+          path: build/AIAvatar-macOS-arm64.zip
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-test-results
+          path: build/Tests.xcresult
+          if-no-files-found: ignore

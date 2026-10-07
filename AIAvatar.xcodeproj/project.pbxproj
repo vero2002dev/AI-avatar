@@ -1,0 +1,260 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		000000000000000000000101 /* AIAvatarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000201; };
+		000000000000000000000102 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000202; };
+		000000000000000000000103 /* CameraDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000203; };
+		000000000000000000000104 /* FrameRateMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000204; };
+		000000000000000000000105 /* CameraCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000205; };
+		000000000000000000000106 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000206; };
+		000000000000000000000107 /* CameraSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000207; };
+		000000000000000000000108 /* FrameRateMeterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000208; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		000000000000000000000801 = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000000000401;
+			remoteInfo = AIAvatar;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		000000000000000000000201 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAvatarApp.swift; sourceTree = "<group>"; };
+		000000000000000000000202 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		000000000000000000000203 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraDevice.swift; sourceTree = "<group>"; };
+		000000000000000000000204 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameRateMeter.swift; sourceTree = "<group>"; };
+		000000000000000000000205 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCapture.swift; sourceTree = "<group>"; };
+		000000000000000000000206 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
+		000000000000000000000207 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSelectionTests.swift; sourceTree = "<group>"; };
+		000000000000000000000208 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameRateMeterTests.swift; sourceTree = "<group>"; };
+		000000000000000000000209 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		000000000000000000000210 = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AIAvatar.entitlements; sourceTree = "<group>"; };
+		000000000000000000000301 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AIAvatar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000302 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AIAvatarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		000000000000000000000502 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		000000000000000000000505 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		000000000000000000000010 = {
+			isa = PBXGroup;
+			children = (000000000000000000000011, 000000000000000000000013, 000000000000000000000014);
+			sourceTree = "<group>";
+		};
+		000000000000000000000011 = {
+			isa = PBXGroup;
+			children = (000000000000000000000201, 000000000000000000000202, 000000000000000000000012, 000000000000000000000209, 000000000000000000000210);
+			path = AIAvatar;
+			sourceTree = "<group>";
+		};
+		000000000000000000000012 = {
+			isa = PBXGroup;
+			children = (000000000000000000000203, 000000000000000000000204, 000000000000000000000205, 000000000000000000000206);
+			path = Camera;
+			sourceTree = "<group>";
+		};
+		000000000000000000000013 = {
+			isa = PBXGroup;
+			children = (000000000000000000000207, 000000000000000000000208);
+			path = AIAvatarTests;
+			sourceTree = "<group>";
+		};
+		000000000000000000000014 = {
+			isa = PBXGroup;
+			children = (000000000000000000000301, 000000000000000000000302);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		000000000000000000000401 = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000000000702;
+			buildPhases = (000000000000000000000501, 000000000000000000000502, 000000000000000000000503);
+			buildRules = ();
+			dependencies = ();
+			name = AIAvatar;
+			productName = AIAvatar;
+			productReference = 000000000000000000000301;
+			productType = "com.apple.product-type.application";
+		};
+		000000000000000000000402 = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000000000703;
+			buildPhases = (000000000000000000000504, 000000000000000000000505, 000000000000000000000506);
+			buildRules = ();
+			dependencies = (000000000000000000000802);
+			name = AIAvatarTests;
+			productName = AIAvatarTests;
+			productReference = 000000000000000000000302;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		000000000000000000000001 = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					000000000000000000000401 = {CreatedOnToolsVersion = 16.0; };
+					000000000000000000000402 = {CreatedOnToolsVersion = 16.0; TestTargetID = 000000000000000000000401; };
+				};
+			};
+			buildConfigurationList = 000000000000000000000701;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = 000000000000000000000010;
+			productRefGroup = 000000000000000000000014;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (000000000000000000000401, 000000000000000000000402);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		000000000000000000000503 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		000000000000000000000506 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		000000000000000000000501 = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (000000000000000000000101, 000000000000000000000102, 000000000000000000000103, 000000000000000000000104, 000000000000000000000105, 000000000000000000000106);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000504 = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (000000000000000000000107, 000000000000000000000108);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		000000000000000000000802 = {isa = PBXTargetDependency; target = 000000000000000000000401; targetProxy = 000000000000000000000801; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		000000000000000000000601 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		000000000000000000000602 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		000000000000000000000603 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AIAvatar/AIAvatar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AIAvatar/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+				PRODUCT_BUNDLE_IDENTIFIER = dev.vero2002.aiavatar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Debug;
+		};
+		000000000000000000000604 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AIAvatar/AIAvatar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AIAvatar/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+				PRODUCT_BUNDLE_IDENTIFIER = dev.vero2002.aiavatar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Release;
+		};
+		000000000000000000000605 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", "@loader_path/../Frameworks");
+				PRODUCT_BUNDLE_IDENTIFIER = dev.vero2002.aiavatar.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AIAvatar.app/Contents/MacOS/AIAvatar";
+			};
+			name = Debug;
+		};
+		000000000000000000000606 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", "@loader_path/../Frameworks");
+				PRODUCT_BUNDLE_IDENTIFIER = dev.vero2002.aiavatar.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AIAvatar.app/Contents/MacOS/AIAvatar";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		000000000000000000000701 = {isa = XCConfigurationList; buildConfigurations = (000000000000000000000601, 000000000000000000000602); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		000000000000000000000702 = {isa = XCConfigurationList; buildConfigurations = (000000000000000000000603, 000000000000000000000604); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		000000000000000000000703 = {isa = XCConfigurationList; buildConfigurations = (000000000000000000000605, 000000000000000000000606); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000001;
+}
