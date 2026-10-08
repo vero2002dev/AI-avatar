@@ -13,6 +13,7 @@ image upload or unrelated repository edits.
 - Cleared stale AI FPS/latency on fallback, stop, disable and initialization; reset completion timing after gaps. Initialization no longer schedules a delayed reset over its ready state.
 - Added native alignment/fallback tests and a reproducible offline compositor checker. Actual 960 x 1280 Vision/Metal composition passed with lower-body maximum pixel difference 0/255 and was visually inspected.
 - Eight Python tests pass locally; native app compiles and the sandbox-inheriting neural bundle signature verifies. CI builds/tests the native app and compiles the offline checker.
+- [Follow-up CI](https://github.com/vero2002dev/AI-avatar/actions/runs/37732301020) for c3d0ba6 completed successfully: Debug/Release xcodebuild, 24 XCTest tests, 8 Python tests, signed bootstrap and offline composition checker compilation. No private imagery/hardware in CI.
 - Physical live validation could not proceed because the Mac session is locked. Prior camera-authorization issue is not declared resolved. Still-image composition is not proof of realtime realism, stability or iPhone hardware support.
 
 Next: validate the changed alignment in live video, then correct light/neck

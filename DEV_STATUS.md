@@ -23,6 +23,10 @@ Neural integration CI for commit 0790dbb passed Debug/Release xcodebuild,
 Follow-up commit abce399 also passed Debug/Release builds, 21 XCTest tests,
 5 Python IPC tests and the signed bootstrap:
 [run 37712514266](https://github.com/vero2002dev/AI-avatar/actions/runs/37712514266).
+Quality/performance follow-up commit c3d0ba6 passed Debug/Release xcodebuild,
+24 XCTest tests, 8 Python tests, signed bootstrap and offline checker compilation:
+[run 37732301020](https://github.com/vero2002dev/AI-avatar/actions/runs/37732301020).
+This run did not validate private images, camera hardware or visual quality.
 
 ## PARTIAL
 
