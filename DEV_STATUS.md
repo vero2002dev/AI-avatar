@@ -1,18 +1,23 @@
 # Development Status
 
-Current scope: Milestone 1, native camera capture. Processing development is gated on compile/test validation and the physical camera checklist.
+Current scope: Milestone 1, native camera capture. Compile/tests are green; completion and processing development remain gated on the physical camera checklist.
 
 ## WORKING
 
-- Repository now contains a native SwiftUI/AVFoundation implementation rather than the original README-only repository.
-- Validation results will be recorded here after the compiler and tests complete. Physical capture has not been marked working.
+- Native app compiles with Xcode 16.4 on the macOS GitHub Actions runner, in Debug and optimized Apple Silicon Release configurations.
+- All 10 XCTest tests pass: automatic preference, manual selection, disconnect/reconnect policy, deterministic sorting and delivered frame-rate/drop calculations.
+- Shared Xcode scheme, camera usage description, sandbox entitlement and Continuity Camera device type opt-in compile successfully.
+- GitHub Actions builds/tests with `xcodebuild` and uploads test results plus an unsigned Apple Silicon app archive.
+- Local Swift type checking against the installed macOS 15.5 SDK passes. Property list/project syntax validation passes.
+- The bootstrap script compiles and links a real native arm64 `.app` on this Mac with Command Line Tools, resolves bundle metadata and creates a verified local signature with camera/sandbox entitlements.
+
+Evidence: [successful CI run](https://github.com/vero2002dev/AI-avatar/actions/runs/37552416691) for commit `8b97cc7024a565edfe81b0b75a776f051d47a1d0`. This proves compile/unit-test validation, not physical video capture.
 
 ## PARTIAL
 
 - Native camera capture is implemented: permission handling, discovery, iPhone preference, preview, live input switching, disconnect fallback/reconnect, camera controls and delivered-frame diagnostics.
-- Camera selection and frame-rate calculation have unit tests; the first CI run is pending.
-- Xcode project, shared scheme, sandbox camera entitlement, usage description and Continuity Camera opt-in are present; full `xcodebuild` validation is pending.
-- GitHub Actions is configured for macOS Debug build, XCTest, Release build and test result upload.
+- Camera discovery, permission dialogs, switching/rollback, interruption and frame delivery behavior still need physical validation.
+- The locally signed app is available at `build/AIAvatar.app`. Runtime validation is blocked by the Mac's locked screen; no preview, permission dialog or camera has been observed yet. Full Xcode remains required to run the project's tests locally.
 - The future processing architecture and hardware test procedure are documented. No transformation processors are represented as working implementations.
 
 ## NOT IMPLEMENTED

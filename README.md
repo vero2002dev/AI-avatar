@@ -42,6 +42,15 @@ xcodebuild -project AIAvatar.xcodeproj -scheme AIAvatar \
 
 Unsigned output is intended for compile/test validation. Use a locally signed build for camera permission and normal application use.
 
+For camera testing on a Mac with only Apple's Command Line Tools, the bootstrap script compiles the same app sources with `swiftc`, resolves the bundle metadata and signs the app locally:
+
+```sh
+bash scripts/build-local-camera.sh
+open build/AIAvatar.app
+```
+
+This produces a runnable native app but does not run XCTest or replace the Xcode CI checks. CI also uploads an unsigned Apple Silicon app archive for inspection.
+
 ## Architecture
 
 - `AIAvatarApp` / `ContentView`: one native window, camera controls, permission and capture status. Unit tests use an inert host window to avoid camera permission dialogs on CI.
