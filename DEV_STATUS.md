@@ -16,12 +16,15 @@ Neural integration pass, 2026-10-08. Actual inference is not a finished realtime
 Neural integration CI for commit 0790dbb passed Debug/Release xcodebuild,
 15 XCTest tests, 5 Python IPC tests and locally signed bootstrap:
 [run 37711978229](https://github.com/vero2002dev/AI-avatar/actions/runs/37711978229).
-Follow-up alignment/backpressure tests require the next commit's own CI result.
+Follow-up commit abce399 also passed Debug/Release builds, 21 XCTest tests,
+5 Python IPC tests and the signed bootstrap:
+[run 37712514266](https://github.com/vero2002dev/AI-avatar/actions/runs/37712514266).
 
 ## PARTIAL
 
 - Live neural head was visibly observed on the Mac camera stream: approximately 0.7 processed FPS, 1331-1383 ms processing time, 1680 MB peak GPU allocations, while capture stayed around 30 FPS. This is far too slow for livestreaming.
 - Initial head composition was too small/misaligned. A follow-up now aligns the detected generated face to the detected live face, preserving aspect ratio, and trims the matte using the generated chin. Updated physical visual validation still needed.
+- Final rebuilt bundle's signature verifies and neural runtime reaches ready. Camera authorization became pending after rebuilding/re-signing, with no permission dialog observed in the app window. This blocks final live visual validation, not compilation or offline inference; do not report the final alignment as physically validated.
 - One-in-flight processing/generation rejection/processed preview are real. Backlit or lost faces explicitly fall back to original video.
 - Neural head/hair animation and Vision matte composition exist; silhouette/neck alignment, light matching, original hair, large rotations and hand occlusions remain incomplete.
 - Expression smoothing and camera/tracking resets exist; full temporal stabilization/adaptive quality unfinished.
