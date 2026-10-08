@@ -5,7 +5,7 @@ import Vision
 final class HeadHairProcessor {
     private let context: CIContext
     private let segmentation = VNGeneratePersonSegmentationRequest()
-    private let faceDetection = VNDetectFaceRectanglesRequest()
+    private let faceDetection = VNDetectFaceLandmarksRequest()
     var enabled = true // Internal debug switch; never an avatar selector.
 
     init(context: CIContext) {
@@ -14,7 +14,25 @@ final class HeadHairProcessor {
         segmentation.outputPixelFormat = kCVPixelFormatType_OneComponent8
     }
 
-    func composite(_ pixels: Data, on original: CIImage, targetFace: CGRect) throws -> CGImage {
+    static func eyes(_ face: VNFaceObservation, image: CGSize) -> FaceEyes? {
+        func center(_ region: VNFaceLandmarkRegion2D?) -> CGPoint? {
+            guard let region, region.pointCount > 0 else { return nil }
+            var point = CGPoint.zero
+            for i in 0..<region.pointCount {
+                point.x += CGFloat(region.normalizedPoints[i].x)
+                point.y += CGFloat(region.normalizedPoints[i].y)
+            }
+            point.x /= CGFloat(region.pointCount)
+            point.y /= CGFloat(region.pointCount)
+            return CGPoint(x: (face.boundingBox.minX + point.x * face.boundingBox.width) * image.width,
+                           y: (face.boundingBox.minY + point.y * face.boundingBox.height) * image.height)
+        }
+        guard let left = center(face.landmarks?.leftEye), let right = center(face.landmarks?.rightEye),
+              hypot(left.x - right.x, left.y - right.y) > face.boundingBox.width * image.width * 0.15 else { return nil }
+        return FaceEyes(left: left, right: right)
+    }
+
+    func composite(_ pixels: Data, on original: CIImage, targetFace: CGRect, targetEyes: FaceEyes? = nil) throws -> CGImage {
         if !enabled, let result = context.createCGImage(original, from: original.extent) { return result }
         guard pixels.count == 512 * 512 * 3, let provider = CGDataProvider(data: pixels as CFData),
               let bitmap = CGImage(width: 512, height: 512, bitsPerComponent: 8, bitsPerPixel: 24, bytesPerRow: 512 * 3,
@@ -22,9 +40,15 @@ final class HeadHairProcessor {
                                    decode: nil, shouldInterpolate: true, intent: .defaultIntent) else { throw NeuralError.failure("Cannot decode neural pixels") }
         try VNImageRequestHandler(cgImage: bitmap).perform([segmentation, faceDetection])
         guard let maskBuffer = segmentation.results?.first?.pixelBuffer else { throw NeuralError.failure("Head segmentation unavailable") }
-        guard let face = faceDetection.results?.first?.boundingBox else { throw NeuralError.failure("Generated face cannot be aligned") }
+        guard let observations = faceDetection.results, observations.count == 1 else { throw NeuralError.failure("Generated face cannot be aligned") }
+        let observation = observations[0]
+        let face = observation.boundingBox
         let generatedFace = CGRect(x: face.minX * 512, y: face.minY * 512, width: face.width * 512, height: face.height * 512)
-        guard let transform = HeadGeometry.placement(generated: generatedFace, target: targetFace) else {
+        let eyeTransform: CGAffineTransform?
+        if let generatedEyes = Self.eyes(observation, image: CGSize(width: 512, height: 512)), let targetEyes {
+            eyeTransform = HeadGeometry.placement(generated: generatedEyes, target: targetEyes)
+        } else { eyeTransform = nil }
+        guard let transform = eyeTransform ?? HeadGeometry.placement(generated: generatedFace, target: targetFace) else {
             throw NeuralError.failure("Invalid face alignment")
         }
         let head = CIImage(cgImage: bitmap)

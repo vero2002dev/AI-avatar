@@ -1,5 +1,43 @@
 # Neural Development Pass
 
+## Follow-Up: Mac Quality and Performance
+
+2026-10-08. Scope remains the Mac app with iPhone Continuity camera. Standalone
+mobile support and remote GPU deployment are deferred. No rental, external
+image upload or unrelated repository edits.
+
+- Corrected smoke-test profile selection; regression test prevents forced quality overriding speed. Every benchmark frame uses fresh warping.
+- Added diagnostic synchronization/timing of real motion, stitching, warping and decoding. Quality/512 measured 765 ms: 403 ms warping, 341 ms generator. Fresh-warp speed mode measured 761 ms, not a meaningful improvement.
+- Experimental 256 rendering measured 241 ms/903 MB peak MLX allocations but lost expression/detail on visual inspection. Not enabled in the app. No realtime/30 FPS claim.
+- Real Vision eye landmarks now align generated/live eye positions with uniform scale and roll; unreliable eyes fall back to face-box alignment.
+- Cleared stale AI FPS/latency on fallback, stop, disable and initialization; reset completion timing after gaps. Initialization no longer schedules a delayed reset over its ready state.
+- Added native alignment/fallback tests and a reproducible offline compositor checker. Actual 960 x 1280 Vision/Metal composition passed with lower-body maximum pixel difference 0/255 and was visually inspected.
+- Eight Python tests pass locally; native app compiles and the sandbox-inheriting neural bundle signature verifies. CI builds/tests the native app and compiles the offline checker.
+- Physical live validation could not proceed because the Mac session is locked. Prior camera-authorization issue is not declared resolved. Still-image composition is not proof of realtime realism, stability or iPhone hardware support.
+
+Next: validate the changed alignment in live video, then correct light/neck
+matching and semantic occlusion while measuring capture-to-display latency.
+The existing renderer is too slow; backend/model replacement needs its own
+measured quality and latency gate before OBS output or a mobile version.
+
+### Follow-Up Files
+
+- .github/workflows/macos.yml
+- AIAvatar/ContentView.swift
+- AIAvatar/Processing/FrameProcessor.swift
+- AIAvatar/Processing/HeadGeometry.swift
+- AIAvatar/Processing/HeadHairProcessor.swift
+- AIAvatarTests/HeadGeometryTests.swift
+- neural/worker.py
+- neural/smoke.py
+- neural/test_protocol.py
+- scripts/check-head-composition.swift
+- README.md
+- DEV_STATUS.md
+- docs/ARCHITECTURE.md
+- docs/PERFORMANCE.md
+- docs/DEVELOPMENT_PASS.md
+
 ## Actual Changes
 
 Two implementation commits: 0790dbb (real MLX neural integration) and abce399

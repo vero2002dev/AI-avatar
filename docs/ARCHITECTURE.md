@@ -11,6 +11,9 @@ extraction. Implicit 3D keypoints drive stitching, neural warping and SPADE
 decoding. Scale/position come from the camera ROI. The generated head is segmented
 and trimmed below the neck, then composited on the matching **camera frame**.
 Source-photo body/background is never the output body/background.
+Generated/live eye landmarks define a uniform similarity transform including
+roll. Unreliable eye landmarks fall back to face-box placement; this does not
+correct neural head pose, illumination or semantic occlusions by itself.
 
 ## Ownership and Budget
 
@@ -22,6 +25,7 @@ Source-photo body/background is never the output body/background.
 - Startup/frame timeouts terminate stuck helper. Helper exits if its parent disappears.
 - Bundled interpreter is signed with sandbox inheritance; weights in bundle, identity in private container. No expanded home-directory access.
 - Tracking/error fallback explicitly displays original. AI timing/FPS is distinct from capture FPS.
+- On fallback, disable, stop or identity initialization, clear current frame timing/FPS and restart the completion interval; do not present old AI rates over original video.
 
 Current model is far outside the 33.3 ms 30 FPS budget. Frame dropping/raw preview
 at 30 FPS is not realtime inference. Output updates at processing speed; displayed
@@ -49,6 +53,7 @@ options. UI has one fixed reference import and Original/AI diagnostics, no ident
 
 1. Validate native RGB orientation, matte/neck alignment, actual expression/rotation and hand occlusions.
 2. Profile warping/decoder, compare lower-resolution features, convert to CoreML/MLX-Swift or use a lighter licensed renderer. Do not load multiple huge models.
+   The [measured audit](PERFORMANCE.md) confirms warping/decoding dominate. A 256-render trial lost expression/detail and is not shipped as the default.
 3. Motion-aware pose/ROI/matte stabilization, lighting harmonization and semantic head/hair/skin/hand masks. Multiple photos alone do not produce 3D geometry.
 4. Explicit tattoo protection before tone/torso edits; leave background/clothing untouched.
 5. Physically validate OBS output; a CMIO virtual camera needs its own signed/approved extension.

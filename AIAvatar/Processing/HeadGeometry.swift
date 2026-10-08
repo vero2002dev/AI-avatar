@@ -1,7 +1,29 @@
 import CoreGraphics
 import Foundation
 
+struct FaceEyes {
+    let left: CGPoint
+    let right: CGPoint
+}
+
 enum HeadGeometry {
+    static func placement(generated: FaceEyes, target: FaceEyes) -> CGAffineTransform? {
+        let points = [generated.left, generated.right, target.left, target.right]
+        guard points.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) else { return nil }
+        let sourceX = generated.right.x - generated.left.x
+        let sourceY = generated.right.y - generated.left.y
+        let targetX = target.right.x - target.left.x
+        let targetY = target.right.y - target.left.y
+        let denominator = sourceX * sourceX + sourceY * sourceY
+        guard denominator > 4, targetX * targetX + targetY * targetY > 4 else { return nil }
+        let a = (sourceX * targetX + sourceY * targetY) / denominator
+        let b = (sourceX * targetY - sourceY * targetX) / denominator
+        guard a.isFinite, b.isFinite else { return nil }
+        return CGAffineTransform(a: a, b: b, c: -b, d: a,
+                                 tx: target.left.x - a * generated.left.x + b * generated.left.y,
+                                 ty: target.left.y - b * generated.left.x - a * generated.left.y)
+    }
+
     static func placement(generated: CGRect, target: CGRect) -> CGAffineTransform? {
         guard generated.width > 0, generated.height > 0, target.width > 0, target.height > 0,
               generated.midX.isFinite, generated.midY.isFinite, target.midX.isFinite, target.midY.isFinite else { return nil }

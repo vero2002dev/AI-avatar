@@ -15,6 +15,13 @@ struct ProcessingSnapshot {
     var memoryMB = 0.0
     var frames = 0
     var image: CGImage?
+
+    mutating func clearFrame(status: String) {
+        image = nil
+        milliseconds = 0
+        framesPerSecond = 0
+        self.status = status
+    }
 }
 
 // AVFoundation's delivered buffer is retained, read-only, and handed to exactly
@@ -79,8 +86,8 @@ final class FrameProcessor: ObservableObject {
             guard let self else { return }
             resetMotion = true
             state.active = value && state.ready
-            state.image = nil
-            state.status = value && state.ready ? "Waiting for a complete head" : "Original video"
+            lastFrameTime = 0
+            state.clearFrame(status: value && state.ready ? "Waiting for a complete head" : "Original video")
             publish()
         }
     }
@@ -91,8 +98,9 @@ final class FrameProcessor: ObservableObject {
             guard let self else { return }
             resetMotion = true
             lastFace = nil
-            state.image = nil
-            state.framesPerSecond = 0
+            lastFaceTime = 0
+            lastFrameTime = 0
+            state.clearFrame(status: "Original video")
             publish()
         }
     }
@@ -108,7 +116,14 @@ final class FrameProcessor: ObservableObject {
     }
 
     private func initialize() {
-        reset()
+        gate.invalidate()
+        resetMotion = true
+        lastFace = nil
+        lastFaceTime = 0
+        lastFrameTime = 0
+        state.clearFrame(status: "Loading neural identity")
+        state.frames = 0
+        state.memoryMB = 0
         client?.shutdown()
         client = nil
         state.ready = false
@@ -153,7 +168,7 @@ final class FrameProcessor: ObservableObject {
         let start = ProcessInfo.processInfo.systemUptime
         do {
             let original = CIImage(cvPixelBuffer: buffer)
-            let request = VNDetectFaceRectanglesRequest()
+            let request = VNDetectFaceLandmarksRequest()
             try VNImageRequestHandler(cvPixelBuffer: buffer, orientation: .up).perform([request])
             if request.results?.isEmpty != false {
                 // Detection-only exposure lift for backlit faces. Camera pixels
@@ -166,15 +181,15 @@ final class FrameProcessor: ObservableObject {
             }
             guard let faces = request.results, faces.count == 1 else {
                 resetMotion = true
-                state.image = nil
-                state.status = "Original video: face not tracked"
+                lastFrameTime = 0
+                state.clearFrame(status: "Original video: face not tracked")
                 publish(epoch: epoch)
                 return
             }
             guard let crop = HeadGeometry.crop(face: faces[0].boundingBox, image: original.extent.size, allowPadding: true) else {
                 resetMotion = true
-                state.image = nil
-                state.status = "Original video: head outside frame"
+                lastFrameTime = 0
+                state.clearFrame(status: "Original video: head outside frame")
                 publish(epoch: epoch)
                 return
             }
@@ -200,11 +215,12 @@ final class FrameProcessor: ObservableObject {
             guard isCurrent(epoch) else { return }
             let target = CGRect(x: face.minX * original.extent.width, y: face.minY * original.extent.height,
                                 width: face.width * original.extent.width, height: face.height * original.extent.height)
-            do { state.image = try headHair.composite(pixels, on: original, targetFace: target) }
+            do { state.image = try headHair.composite(pixels, on: original, targetFace: target,
+                                                    targetEyes: HeadHairProcessor.eyes(faces[0], image: original.extent.size)) }
             catch {
                 resetMotion = true
-                state.image = nil
-                state.status = "Original video: \(error.localizedDescription)"
+                lastFrameTime = 0
+                state.clearFrame(status: "Original video: \(error.localizedDescription)")
                 publish(epoch: epoch)
                 return
             }
@@ -227,8 +243,9 @@ final class FrameProcessor: ObservableObject {
     private func fail(_ message: String) {
         client?.shutdown(); client = nil
         gate.setEnabled(false)
-        state.ready = false; state.active = false; state.image = nil
-        state.status = message
+        state.ready = false; state.active = false
+        lastFrameTime = 0
+        state.clearFrame(status: message)
         publish()
     }
 

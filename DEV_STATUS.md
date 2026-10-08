@@ -1,6 +1,8 @@
 # Development Status
 
 Neural integration pass, 2026-10-08. Actual inference is not a finished realtime avatar.
+Current priority: Mac app + iPhone Continuity camera. Standalone mobile and cloud
+GPU deployment are deferred, not working features.
 
 ## WORKING
 
@@ -12,6 +14,8 @@ Neural integration pass, 2026-10-08. Actual inference is not a finished realtime
 - Five pinned human weights installed; restricted InsightFace/XPose detectors and extra generators excluded. Appearance extractor released after initialization.
 - Bundled helper starts inside the app sandbox and reaches ready state. Identity/crop remain private in the container; originals are Git-ignored.
 - Five Python IPC tests pass locally. Native sources compiled and the sandbox-inheriting bundle was locally signed/verified during this pass.
+- Follow-up performance/quality pass: eight Python protocol/profiling tests pass locally; requested profile regression and fresh-warp safety covered. Native app compiles and signed neural bundle verifies.
+- Separate real MLX stage profiling: quality/512 median 765 ms, warping 403 ms and decoder 341 ms. Fresh-warp speed mode 761 ms; no meaningful speed gain. See [PERFORMANCE.md](docs/PERFORMANCE.md).
 
 Neural integration CI for commit 0790dbb passed Debug/Release xcodebuild,
 15 XCTest tests, 5 Python IPC tests and locally signed bootstrap:
@@ -24,6 +28,11 @@ Follow-up commit abce399 also passed Debug/Release builds, 21 XCTest tests,
 
 - Live neural head was visibly observed on the Mac camera stream: approximately 0.7 processed FPS, 1331-1383 ms processing time, 1680 MB peak GPU allocations, while capture stayed around 30 FPS. This is far too slow for livestreaming.
 - Initial head composition was too small/misaligned. A follow-up now aligns the detected generated face to the detected live face, preserving aspect ratio, and trims the matte using the generated chin. Updated physical visual validation still needed.
+- New eye-landmark similarity alignment adds roll correction, with face-box fallback. Actual Vision/Metal offline composition inspected; unit tests cover both eyes, scale/roll and invalid inputs. This is not live-motion validation.
+- Offline composition checker passed at 960 x 1280 with lower-body maximum pixel difference 0/255. This checks the lower 40% only, not all tattoos/occlusions/head edges.
+- Fallback/stop/reinitialization now clears current AI FPS/latency and resets the timing interval, instead of displaying historical throughput while showing original video.
+- Experimental 256 rendering measured 241 ms and 903 MB peak MLX allocations, but expression/detail regressed. Kept in the offline benchmark only; app remains quality/512, no adaptive-quality claim.
+- Latest physical app validation is also blocked by a locked Mac session; camera permission/live alignment/lighting remain unverified. Offline neural and composition checks do not need camera access.
 - Final rebuilt bundle's signature verifies and neural runtime reaches ready. Camera authorization became pending after rebuilding/re-signing, with no permission dialog observed in the app window. This blocks final live visual validation, not compilation or offline inference; do not report the final alignment as physically validated.
 - One-in-flight processing/generation rejection/processed preview are real. Backlit or lost faces explicitly fall back to original video.
 - Neural head/hair animation and Vision matte composition exist; silhouette/neck alignment, light matching, original hair, large rotations and hand occlusions remain incomplete.
@@ -41,6 +50,7 @@ Follow-up commit abce399 also passed Debug/Release builds, 21 XCTest tests,
 - CoreML/MLX-Swift conversion, adaptive rendering, sustained 30 FPS transformation.
 - Syphon, OBS receiving frames, CMIO virtual camera, recording/export.
 - Distribution signing/notarization, installer and custom icon.
+- Standalone iOS/Android/Windows applications and remote GPU transport.
 
 ## NEEDS REAL MAC TEST
 

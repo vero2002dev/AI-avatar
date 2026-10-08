@@ -2,6 +2,43 @@ import XCTest
 @testable import AIAvatar
 
 final class HeadGeometryTests: XCTestCase {
+    func testEyeAlignmentMapsBothEyesWithRollAndScale() throws {
+        let source = FaceEyes(left: CGPoint(x: 80, y: 100), right: CGPoint(x: 180, y: 100))
+        let target = FaceEyes(left: CGPoint(x: 200, y: 300), right: CGPoint(x: 200, y: 500))
+        let transform = try XCTUnwrap(HeadGeometry.placement(generated: source, target: target))
+        for (point, expected) in [(source.left, target.left), (source.right, target.right)] {
+            XCTAssertEqual(point.applying(transform).x, expected.x, accuracy: 0.001)
+            XCTAssertEqual(point.applying(transform).y, expected.y, accuracy: 0.001)
+        }
+        XCTAssertEqual(transform.a, transform.d)
+        XCTAssertEqual(transform.b, -transform.c)
+    }
+
+    func testEyeAlignmentRejectsCollapsedAndNonFiniteEyes() {
+        let valid = FaceEyes(left: .zero, right: CGPoint(x: 100, y: 0))
+        XCTAssertNil(HeadGeometry.placement(generated: FaceEyes(left: .zero, right: .zero), target: valid))
+        XCTAssertNil(HeadGeometry.placement(generated: valid, target: FaceEyes(left: CGPoint(x: CGFloat.nan, y: 0), right: .zero)))
+    }
+
+    func testFallbackClearsOnlyCurrentFrameMetrics() {
+        var snapshot = ProcessingSnapshot()
+        snapshot.ready = true
+        snapshot.active = true
+        snapshot.frames = 12
+        snapshot.milliseconds = 750
+        snapshot.framesPerSecond = 1.3
+        snapshot.memoryMB = 1680
+        snapshot.clearFrame(status: "Original video: face not tracked")
+        XCTAssertEqual(snapshot.milliseconds, 0)
+        XCTAssertEqual(snapshot.framesPerSecond, 0)
+        XCTAssertNil(snapshot.image)
+        XCTAssertEqual(snapshot.status, "Original video: face not tracked")
+        XCTAssertEqual(snapshot.frames, 12)
+        XCTAssertEqual(snapshot.memoryMB, 1680)
+        XCTAssertTrue(snapshot.ready)
+        XCTAssertTrue(snapshot.active)
+    }
+
     func testBackpressureAllowsOnlyOneFlight() throws {
         let gate = FrameGate()
         XCTAssertNil(gate.begin())

@@ -151,7 +151,7 @@ private struct ProcessingControls: View {
                 .help("Import the fixed identity reference")
             Text(processor.snapshot.status).font(.callout).foregroundStyle(.secondary)
             Spacer(minLength: 0)
-            if processor.snapshot.frames > 0 && processor.snapshot.active {
+            if processor.snapshot.image != nil && processor.snapshot.active {
                 Text(String(format: "AI %.1f FPS | %.0f ms | %.0f MB GPU peak", processor.snapshot.framesPerSecond, processor.snapshot.milliseconds, processor.snapshot.memoryMB))
                     .font(.caption.monospacedDigit())
             }

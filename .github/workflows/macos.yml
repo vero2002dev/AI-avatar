@@ -43,6 +43,11 @@ jobs:
         run: ditto -c -k --sequesterRsrc --keepParent DerivedData/Build/Products/Release/AIAvatar.app build/AIAvatar-macOS-arm64.zip
       - name: Validate locally signed bootstrap build
         run: bash scripts/build-local-camera.sh
+      - name: Compile offline head composition checker
+        run: >-
+          xcrun swiftc -O AIAvatar/Processing/HeadGeometry.swift
+          AIAvatar/Processing/HeadHairProcessor.swift AIAvatar/Processing/NeuralClient.swift
+          scripts/check-head-composition.swift -o build/head-composition-check
       - name: Upload unsigned app
         uses: actions/upload-artifact@v4
         with:

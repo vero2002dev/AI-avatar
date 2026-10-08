@@ -4,6 +4,10 @@ Native SwiftUI / AVFoundation macOS app for **one fixed identity**, now with an
 actual local neural head-animation path. Not a static face sticker or web UI.
 This is experimental: **not yet a photorealistic, stable, low-latency livestream product**.
 
+Current scope: finish the native Mac app, with iPhone available as its Continuity
+camera. Standalone iPhone/Android apps and cloud GPU integration are deferred;
+neither is currently implemented.
+
 ## Implemented
 
 - Real permission, Mac/Continuity/external/Desk View discovery, iPhone preference, input switching/rollback, reconnect and interruption handling.
@@ -11,6 +15,7 @@ This is experimental: **not yet a photorealistic, stable, low-latency livestream
 - Vision face ROIs, separate inference queue, one retained frame in flight, no backlog, stale-generation rejection.
 - Five pinned human LivePortrait MLX models: cached appearance, motion/3D keypoints, stitching, neural warping and SPADE decoding. Real expressions/rotation drive generated face/head pixels.
 - Vision generated-head segmentation and Metal-backed Core Image composition onto the matching **live camera frame**, not the source photo's body/background.
+- Generated/live eye-landmark alignment corrects translation, scale and roll, with face-box fallback when eye landmarks are unreliable. Latest live validation is pending.
 - Original/AI diagnostics, actual AI timing/FPS/GPU peak memory, explicit tracking/error fallback.
 - Fixed-reference import into private app-container storage. No generic avatar selector, browser camera, microphone, cloud inference or photo upload.
 - App Sandbox retained; bundled Python helper inherits it. UI/capture/tracking/composition are Swift; inference is Python/MLX, **not yet CoreML or pure Swift**.
@@ -19,6 +24,8 @@ An actual neutral-to-smile test on M2 took about **734 ms per frame** and
 **1676 MB peak MLX GPU allocations**. This is not total RAM or end-to-end latency.
 Concurrent camera/benchmark load was slower. **The model does not meet 30 FPS.**
 See [DEV_STATUS.md](DEV_STATUS.md) for validation boundaries.
+The [performance audit](docs/PERFORMANCE.md) isolates warping/decoding and records
+why the lower-resolution experiment is not enabled in the app.
 
 ## Build
 
