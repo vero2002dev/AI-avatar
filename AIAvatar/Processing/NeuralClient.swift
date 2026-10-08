@@ -35,9 +35,10 @@ final class FaceIdentityProcessor {
     private var watchdog: DispatchSourceTimer?
     private var frameID = 0
 
-    init(runtime: NeuralRuntime, source: URL) throws {
+    init(runtime: NeuralRuntime, source: URL, temporal: Bool = true) throws {
         process.executableURL = runtime.python
         process.arguments = [runtime.worker.path, "--engine", runtime.engine.path, "--weights", runtime.weights.path, "--source", source.path]
+        if !temporal { process.arguments?.append("--no-temporal") }
         process.standardInput = input
         process.standardOutput = output
         process.standardError = FileHandle.standardError

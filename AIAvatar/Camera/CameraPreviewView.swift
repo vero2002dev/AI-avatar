@@ -13,6 +13,10 @@ struct CameraPreviewView: NSViewRepresentable {
 
     func updateNSView(_ nsView: PreviewView, context: Context) {
         if nsView.previewLayer.session !== session { nsView.previewLayer.session = session }
+        if let connection = nsView.previewLayer.connection, connection.isVideoMirroringSupported {
+            connection.automaticallyAdjustsVideoMirroring = false
+            connection.isVideoMirrored = false
+        }
     }
 
     static func dismantleNSView(_ nsView: PreviewView, coordinator: ()) {

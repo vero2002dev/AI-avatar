@@ -2,6 +2,16 @@ import CoreGraphics
 import Foundation
 
 enum HeadGeometry {
+    static func placement(generated: CGRect, target: CGRect) -> CGAffineTransform? {
+        guard generated.width > 0, generated.height > 0, target.width > 0, target.height > 0,
+              generated.midX.isFinite, generated.midY.isFinite, target.midX.isFinite, target.midY.isFinite else { return nil }
+        let scale = sqrt(target.width / generated.width * target.height / generated.height)
+        guard scale.isFinite else { return nil }
+        return CGAffineTransform(a: scale, b: 0, c: 0, d: scale,
+                                 tx: target.midX - generated.midX * scale,
+                                 ty: target.midY - generated.midY * scale)
+    }
+
     // Vision and Core Image use bottom-left coordinates. Reference and driving
     // crops must share this convention to preserve native scale and translation.
     static func crop(face: CGRect, image: CGSize, allowPadding: Bool = false) -> CGRect? {
@@ -18,6 +28,35 @@ enum HeadGeometry {
             return result
         }
         return nil
+    }
+}
+
+final class FrameGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var enabled = false
+    private var busy = false
+    private var generation = 0
+
+    func setEnabled(_ value: Bool) {
+        lock.lock(); defer { lock.unlock() }
+        enabled = value
+        generation += 1
+    }
+
+    func invalidate() { lock.lock(); generation += 1; lock.unlock() }
+
+    func begin() -> Int? {
+        lock.lock(); defer { lock.unlock() }
+        guard enabled, !busy else { return nil }
+        busy = true
+        return generation
+    }
+
+    func finish() { lock.lock(); busy = false; lock.unlock() }
+
+    func isCurrent(_ epoch: Int) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return enabled && generation == epoch
     }
 }
 

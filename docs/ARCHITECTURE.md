@@ -16,7 +16,7 @@ Source-photo body/background is never the output body/background.
 
 - Capture/configuration and inference have separate serial queues.
 - One retained read-only pixel buffer in flight; busy frames dropped, no backlog.
-- Switch/stop/restart invalidates generation; obsolete results cannot publish.
+- Switch/stop/restart invalidates generation; obsolete results cannot publish. Backpressure/generation rules have unit tests.
 - One Metal Core Image context, one segmentation request, one loaded renderer. Appearance extractor released after source preparation; MLX allocation cache capped at 128 MB.
 - Local framed stdin/stdout: little-endian uint32 JSON size, bounded header and fixed RGB payload, matched response ID. Logs on stderr; no server/network.
 - Startup/frame timeouts terminate stuck helper. Helper exits if its parent disappears.
@@ -41,8 +41,9 @@ processing duration includes tracking/copies/inference/segmentation/composition.
 | BodyDefinitionProcessor | Not implemented; must preserve actual torso motion/ink/clothing |
 | OutputPipeline | Native processed preview only; OBS/Syphon/CMIO pending |
 
-Missing processors are documented, not no-op effects or fake buttons. UI has
-one fixed reference import and Original/AI diagnostics, no identity library.
+Missing processors are documented, not no-op effects or fake buttons. Implemented
+identity, head composition and temporal modules have independent internal debug
+options. UI has one fixed reference import and Original/AI diagnostics, no identity library.
 
 ## Next Work
 

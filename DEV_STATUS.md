@@ -13,13 +13,16 @@ Neural integration pass, 2026-10-08. Actual inference is not a finished realtime
 - Bundled helper starts inside the app sandbox and reaches ready state. Identity/crop remain private in the container; originals are Git-ignored.
 - Five Python IPC tests pass locally. Native sources compiled and the sandbox-inheriting bundle was locally signed/verified during this pass.
 
-Previous camera-only CI: [run 37708367136](https://github.com/vero2002dev/AI-avatar/actions/runs/37708367136),
-10 passing XCTest tests and Debug/Release builds. New neural tests/build need
-their own new CI result; prior success does not validate new code.
+Neural integration CI for commit 0790dbb passed Debug/Release xcodebuild,
+15 XCTest tests, 5 Python IPC tests and locally signed bootstrap:
+[run 37711978229](https://github.com/vero2002dev/AI-avatar/actions/runs/37711978229).
+Follow-up alignment/backpressure tests require the next commit's own CI result.
 
 ## PARTIAL
 
-- One-in-flight processor, generation rejection, native processed preview and ROI path implemented. Initial backlit live test correctly fell back to original because the face was not tracked; live transformed picture quality needs confirmation.
+- Live neural head was visibly observed on the Mac camera stream: approximately 0.7 processed FPS, 1331-1383 ms processing time, 1680 MB peak GPU allocations, while capture stayed around 30 FPS. This is far too slow for livestreaming.
+- Initial head composition was too small/misaligned. A follow-up now aligns the detected generated face to the detected live face, preserving aspect ratio, and trims the matte using the generated chin. Updated physical visual validation still needed.
+- One-in-flight processing/generation rejection/processed preview are real. Backlit or lost faces explicitly fall back to original video.
 - Neural head/hair animation and Vision matte composition exist; silhouette/neck alignment, light matching, original hair, large rotations and hand occlusions remain incomplete.
 - Expression smoothing and camera/tracking resets exist; full temporal stabilization/adaptive quality unfinished.
 - Body/background outside head matte untouched, but explicit tattoo protection during body editing is not implemented.

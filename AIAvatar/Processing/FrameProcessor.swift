@@ -21,15 +21,19 @@ struct ProcessingSnapshot {
 // one worker. No mutation or simultaneous inference accesses it.
 private struct CapturedFrame: @unchecked Sendable { let buffer: CVPixelBuffer }
 
+struct ProcessingDebugOptions {
+    var faceIdentity = true
+    var headHair = true
+    var temporal = true
+}
+
 final class FrameProcessor: ObservableObject {
     @Published private(set) var snapshot = ProcessingSnapshot()
     private let queue = DispatchQueue(label: "dev.vero2002.aiavatar.neural", qos: .userInitiated)
-    private let lock = NSLock()
-    private var busy = false
-    private var enabled = false
-    private var generation = 0
+    private let gate = FrameGate()
     private let context: CIContext
     private let headHair: HeadHairProcessor
+    private let debug: ProcessingDebugOptions
     private var client: FaceIdentityProcessor?
     private var state = ProcessingSnapshot()
     private var resetMotion = true
@@ -42,11 +46,13 @@ final class FrameProcessor: ObservableObject {
             .appendingPathComponent("AIAvatar/Identity", isDirectory: true)
     }
 
-    init() {
+    init(debug: ProcessingDebugOptions = ProcessingDebugOptions()) {
+        self.debug = debug
         if let device = MTLCreateSystemDefaultDevice() {
             context = CIContext(mtlDevice: device, options: [.cacheIntermediates: false])
         } else { context = CIContext(options: [.cacheIntermediates: false]) }
         headHair = HeadHairProcessor(context: context)
+        headHair.enabled = debug.headHair
     }
 
     func prepare() { queue.async { [weak self] in self?.initialize() } }
@@ -68,7 +74,7 @@ final class FrameProcessor: ObservableObject {
     }
 
     func setEnabled(_ value: Bool) {
-        lock.lock(); enabled = value; generation += 1; lock.unlock()
+        gate.setEnabled(value)
         queue.async { [weak self] in
             guard let self else { return }
             resetMotion = true
@@ -80,7 +86,7 @@ final class FrameProcessor: ObservableObject {
     }
 
     func reset() {
-        lock.lock(); generation += 1; lock.unlock()
+        gate.invalidate()
         queue.async { [weak self] in
             guard let self else { return }
             resetMotion = true
@@ -92,15 +98,11 @@ final class FrameProcessor: ObservableObject {
     }
 
     func submit(_ buffer: CVPixelBuffer, at time: TimeInterval) {
-        lock.lock()
-        guard enabled, !busy else { lock.unlock(); return }
-        busy = true
-        let epoch = generation
-        lock.unlock()
+        guard let epoch = gate.begin() else { return }
         let frame = CapturedFrame(buffer: buffer)
         queue.async { [weak self] in
             guard let self else { return }
-            defer { lock.lock(); busy = false; lock.unlock() }
+            defer { gate.finish() }
             autoreleasepool { self.process(frame.buffer, at: time, epoch: epoch) }
         }
     }
@@ -114,6 +116,7 @@ final class FrameProcessor: ObservableObject {
         state.status = "Loading neural identity"
         publish()
         do {
+            guard debug.faceIdentity else { throw NeuralError.failure("Identity disabled for internal debugging") }
             let runtime = try NeuralRuntime.load()
             let reference = Self.identityFolder.appendingPathComponent("reference.jpg")
             guard FileManager.default.fileExists(atPath: reference.path) else { throw NeuralError.failure("Fixed identity photo required") }
@@ -122,9 +125,9 @@ final class FrameProcessor: ObservableObject {
             guard let output = CGImageDestinationCreateWithURL(cropURL as CFURL, "public.png" as CFString, 1, nil) else { throw NeuralError.failure("Could not save private identity crop") }
             CGImageDestinationAddImage(output, image, nil)
             guard CGImageDestinationFinalize(output) else { throw NeuralError.failure("Could not save identity") }
-            client = try FaceIdentityProcessor(runtime: runtime, source: cropURL)
+            client = try FaceIdentityProcessor(runtime: runtime, source: cropURL, temporal: debug.temporal)
             state.ready = true
-            lock.lock(); enabled = true; lock.unlock()
+            gate.setEnabled(true)
             state.active = true
             state.status = "Neural identity ready"
             resetMotion = true
@@ -195,8 +198,17 @@ final class FrameProcessor: ObservableObject {
             let (reply, pixels) = try client.render(rgb: packed, reset: resetMotion)
             resetMotion = false
             guard isCurrent(epoch) else { return }
-            state.image = try headHair.composite(pixels, on: original, crop: crop)
-            state.status = "Neural face + head"
+            let target = CGRect(x: face.minX * original.extent.width, y: face.minY * original.extent.height,
+                                width: face.width * original.extent.width, height: face.height * original.extent.height)
+            do { state.image = try headHair.composite(pixels, on: original, targetFace: target) }
+            catch {
+                resetMotion = true
+                state.image = nil
+                state.status = "Original video: \(error.localizedDescription)"
+                publish(epoch: epoch)
+                return
+            }
+            state.status = debug.headHair ? "Neural face + head" : "Original video: composition disabled for debugging"
             state.milliseconds = (ProcessInfo.processInfo.systemUptime - start) * 1000
             let finished = ProcessInfo.processInfo.systemUptime
             state.framesPerSecond = lastFrameTime > 0 ? 1 / (finished - lastFrameTime) : 0
@@ -214,15 +226,14 @@ final class FrameProcessor: ObservableObject {
 
     private func fail(_ message: String) {
         client?.shutdown(); client = nil
-        lock.lock(); enabled = false; lock.unlock()
+        gate.setEnabled(false)
         state.ready = false; state.active = false; state.image = nil
         state.status = message
         publish()
     }
 
     private func isCurrent(_ epoch: Int) -> Bool {
-        lock.lock(); defer { lock.unlock() }
-        return enabled && generation == epoch
+        gate.isCurrent(epoch)
     }
 
     private func publish(epoch: Int? = nil) {

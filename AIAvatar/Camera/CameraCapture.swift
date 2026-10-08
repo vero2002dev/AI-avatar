@@ -230,6 +230,10 @@ final class CameraCapture: NSObject, ObservableObject, AVCaptureVideoDataOutputS
             videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: format]
         }
         session.commitConfiguration()
+        if let connection = videoOutput.connection(with: .video), connection.isVideoMirroringSupported {
+            connection.automaticallyAdjustsVideoMirroring = false
+            connection.isVideoMirrored = false
+        }
         activeInput = newInput
         current.selectedDevice = CameraDevice(device)
         current.errorMessage = nil

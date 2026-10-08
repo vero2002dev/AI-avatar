@@ -50,8 +50,23 @@ def write_packet(stream, header, payload=b""):
     stream.flush()
 
 
+class TemporalStabilizer:
+    def __init__(self, enabled=True):
+        self.enabled = enabled
+        self.previous = None
+
+    def reset(self):
+        self.previous = None
+
+    def process(self, expression):
+        if self.enabled and self.previous is not None:
+            expression = 0.8 * expression + 0.2 * self.previous
+        self.previous = expression.copy()
+        return expression
+
+
 class NeuralHead:
-    def __init__(self, engine, weights, source):
+    def __init__(self, engine, weights, source, temporal=True):
         import cv2
         import mlx.core as mx
         import numpy as np
@@ -80,7 +95,7 @@ class NeuralHead:
         s = self.source
         self.keypoints = s["scale"] * (s["kp"] @ self.rotation_source + s["exp"]) + s["t"]
         self.baseline = None
-        self.previous_expression = None
+        self.stabilizer = TemporalStabilizer(temporal)
         self.renderer.predict(self.feature, self.keypoints, self.keypoints, return_numpy=True, return_uint8=True)
         mx.clear_cache()
 
@@ -101,14 +116,12 @@ class NeuralHead:
         driving = self.info(rgb)
         if self.baseline is None or reset:
             self.baseline = {k: v.copy() for k, v in driving.items()}
-            self.previous_expression = None
+            self.stabilizer.reset()
             self.renderer.reset_temporal_cache()
         s, d0 = self.source, self.baseline
         rotation = self.rotation(driving) @ self.rotation(d0).transpose(0, 2, 1) @ self.rotation_source
         expression = s["exp"] + driving["exp"] - d0["exp"]
-        if self.previous_expression is not None:
-            expression = 0.8 * expression + 0.2 * self.previous_expression
-        self.previous_expression = expression.copy()
+        expression = self.stabilizer.process(expression)
         # Translation and scale come from the native ROI, not from source-body pixels.
         translation = s["t"].copy()
         translation[..., 2] = 0
@@ -124,6 +137,7 @@ def main():
     parser.add_argument("--engine", type=Path, required=True)
     parser.add_argument("--weights", type=Path, required=True)
     parser.add_argument("--source", type=Path, required=True)
+    parser.add_argument("--no-temporal", action="store_true")
     args = parser.parse_args()
     parent = os.getppid()
     def watch_parent():
@@ -134,7 +148,7 @@ def main():
     output = sys.stdout.buffer
     try:
         with contextlib.redirect_stdout(sys.stderr):
-            model = NeuralHead(args.engine, args.weights, args.source)
+            model = NeuralHead(args.engine, args.weights, args.source, temporal=not args.no_temporal)
         write_packet(output, {"type": "ready"})
         while (packet := read_packet(sys.stdin.buffer)) is not None:
             header, payload = packet
