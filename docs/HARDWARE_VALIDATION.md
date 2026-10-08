@@ -33,6 +33,7 @@ Run a signed local build on the target Mac. CI does not execute this checklist. 
 - [ ] An unavailable/busy camera reports the actual failure; a failed switch preserves the previous camera where possible.
 - [ ] Interrupt camera availability, including iPhone use/unlock/call: status and recovery reflect actual frames.
 - [ ] Interrupt frame delivery for over three seconds: the app stops claiming Live and reports waiting.
+- [ ] If AVFoundation unexpectedly stops the session, stale video is hidden and a retry can start capture again.
 - [ ] A denied/restricted camera never leaves a stale live preview visible.
 
 ## Performance and Presentation

@@ -292,6 +292,7 @@ final class CameraCapture: NSObject, ObservableObject, AVCaptureVideoDataOutputS
         session.inputs.forEach { session.removeInput($0) }
         session.commitConfiguration()
         activeInput = nil
+        isInterrupted = false
         current.selectedDevice = nil
         current.phase = .noCamera
         resetMetrics()
@@ -325,6 +326,22 @@ final class CameraCapture: NSObject, ObservableObject, AVCaptureVideoDataOutputS
                 self?.refreshDevices()
             })
         }
+        observations.append(center.addObserver(
+            forName: AVCaptureSession.didStopRunningNotification, object: session, queue: nil
+        ) { [weak self] _ in
+            self?.sessionQueue.async { [weak self] in
+                guard let self, !session.isRunning else { return }
+                resetMetrics()
+                if current.selectedDevice == nil {
+                    current.phase = .noCamera
+                } else if !current.wantsRunning {
+                    current.phase = .paused
+                } else if current.phase != .failed {
+                    current.phase = isInterrupted ? .interrupted : .waitingForFrames
+                }
+                publish()
+            }
+        })
         observations.append(center.addObserver(
             forName: AVCaptureSession.wasInterruptedNotification, object: session, queue: nil
         ) { [weak self] _ in

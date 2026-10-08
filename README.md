@@ -12,7 +12,7 @@ The current development pass implements Milestone 1: camera capture. The preview
 - Displays a native `AVCaptureVideoPreviewLayer` and the actual device name/type.
 - Switches inputs without blocking the UI. If a new camera cannot be attached, restores the previous input where possible.
 - Observes device discovery and connect/disconnect notifications. Falls back when a device disappears and restores a pinned camera when it reconnects.
-- Starts/stops capture, reports interruptions, retries a runtime failure once, and detects missing video frames.
+- Starts/stops capture, reports interruptions and unexpected session stops, retries a runtime failure once, and detects missing video frames.
 - Requests 1280 x 720 and 30 FPS when supported; reports actual delivered dimensions, measured FPS and dropped frames.
 - Uses a serial capture queue, drops late frames and prefers NV12 pixel buffers. No microphone capture, network video transmission or third-party models.
 
