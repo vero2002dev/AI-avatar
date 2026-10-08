@@ -66,30 +66,39 @@ class TemporalStabilizer:
 
 
 class NeuralHead:
-    def __init__(self, engine, weights, source, temporal=True):
+    def __init__(self, engine, weights, source, temporal=True, profile="quality", profile_stages=False, render_size=512):
+        if render_size not in (256, 512):
+            raise ValueError("Neural rendering supports only 256 or 512 pixels")
         import cv2
         import mlx.core as mx
         import numpy as np
         sys.path.insert(0, str(engine))
         from src.utils.mlx_profiles import apply_mlx_profile
-        apply_mlx_profile("quality")
+        apply_mlx_profile(profile)
         from src.models.mlx_motion_extractor_model import MlxMotionExtractorModel
         from src.models.mlx_appearance_feature_extractor_model import MlxAppearanceFeatureExtractorModel
         from src.models.mlx_warping_spade_model import MlxWarpingSpadeModel
         from src.models.mlx_stitching_model import MlxStitchingModel
         self.cv2, self.np, self.mx = cv2, np, mx
+        self.stage_ms = {}
+        self.profile_stages = profile_stages
+        self.render_size = render_size
         mx.set_cache_limit(128 * 1024 * 1024)
         # Avoid the upstream face detectors/landmark weights with separate licenses.
         self.motion = MlxMotionExtractorModel(model_path=str(weights / "motion_extractor.npz"), dtype="bf16")
         appearance = MlxAppearanceFeatureExtractorModel(model_path=str(weights / "appearance_feature_extractor.npz"), dtype="bf16")
-        self.renderer = MlxWarpingSpadeModel(model_path=[str(weights / "warping_module.npz"), str(weights / "spade_generator.npz")], dtype="bf16")
+        # Every reported frame must reflect fresh motion, including speed mode.
+        self.renderer = MlxWarpingSpadeModel(model_path=[str(weights / "warping_module.npz"), str(weights / "spade_generator.npz")], dtype="bf16", temporal_warp_interval=1)
+        if profile_stages:
+            self.renderer._warping_out = self.timed("warping", self.renderer._warping_out)
+            self.renderer._spade_fn = self.timed("generator", self.renderer._spade_fn)
         self.stitch = MlxStitchingModel(model_path=str(weights / "stitching.npz"), dtype="fp32")
         image = cv2.imread(str(source))
         if image is None:
             raise ValueError("Cannot read the private identity crop")
         rgb = cv2.cvtColor(cv2.resize(image, (256, 256)), cv2.COLOR_BGR2RGB)
         self.source = self.info(rgb)
-        self.feature = appearance.predict(rgb)
+        self.feature = appearance.predict(cv2.resize(rgb, (render_size // 2, render_size // 2)))
         del appearance
         self.rotation_source = self.rotation(self.source)
         s = self.source
@@ -98,6 +107,17 @@ class NeuralHead:
         self.stabilizer = TemporalStabilizer(temporal)
         self.renderer.predict(self.feature, self.keypoints, self.keypoints, return_numpy=True, return_uint8=True)
         mx.clear_cache()
+
+    def timed(self, name, operation):
+        def measured(*args, **kwargs):
+            start = time.perf_counter()
+            result = operation(*args, **kwargs)
+            # MLX is lazy. Synchronize only in diagnostic mode; normal rendering
+            # keeps the graph asynchronous until the pixels are required.
+            self.mx.eval(result)
+            self.stage_ms[name] = (time.perf_counter() - start) * 1000
+            return result
+        return measured
 
     def info(self, image):
         keys = ("pitch", "yaw", "roll", "t", "exp", "scale", "kp")
@@ -113,7 +133,10 @@ class NeuralHead:
 
     def render(self, rgb, reset=False):
         np = self.np
+        self.stage_ms = {}
+        start = time.perf_counter()
         driving = self.info(rgb)
+        self.stage_ms["motion"] = (time.perf_counter() - start) * 1000
         if self.baseline is None or reset:
             self.baseline = {k: v.copy() for k, v in driving.items()}
             self.stabilizer.reset()
@@ -126,9 +149,15 @@ class NeuralHead:
         translation = s["t"].copy()
         translation[..., 2] = 0
         points = s["scale"] * (s["kp"] @ rotation + expression) + translation
+        start = time.perf_counter()
         correction = self.stitch.predict(np.concatenate([self.keypoints.reshape(1, -1), points.reshape(1, -1)], axis=1))
         points += correction[:, :63].reshape(1, 21, 3) + np.pad(correction[:, 63:65], ((0, 0), (0, 1)))[:, None]
+        self.stage_ms["stitching"] = (time.perf_counter() - start) * 1000
+        start = time.perf_counter()
         result = self.renderer.predict(self.feature, self.keypoints, points, return_numpy=True, return_uint8=True)
+        self.stage_ms["rendering"] = (time.perf_counter() - start) * 1000
+        if self.render_size != 512:
+            result = self.cv2.resize(result, (512, 512), interpolation=self.cv2.INTER_CUBIC)
         return np.ascontiguousarray(result)
 
 
