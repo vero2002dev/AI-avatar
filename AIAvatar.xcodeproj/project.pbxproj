@@ -6,6 +6,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        000000000000000000000113 = {isa = PBXBuildFile; fileRef = 000000000000000000000215; };
+        000000000000000000000109 = {isa = PBXBuildFile; fileRef = 000000000000000000000211; };
+        000000000000000000000110 = {isa = PBXBuildFile; fileRef = 000000000000000000000212; };
+        000000000000000000000111 = {isa = PBXBuildFile; fileRef = 000000000000000000000213; };
+        000000000000000000000112 = {isa = PBXBuildFile; fileRef = 000000000000000000000214; };
 		000000000000000000000101 /* AIAvatarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000201; };
 		000000000000000000000102 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000202; };
 		000000000000000000000103 /* CameraDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000203; };
@@ -27,6 +32,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+        000000000000000000000215 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadHairProcessor.swift; sourceTree = "<group>"; };
+        000000000000000000000211 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadGeometry.swift; sourceTree = "<group>"; };
+        000000000000000000000212 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeuralClient.swift; sourceTree = "<group>"; };
+        000000000000000000000213 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameProcessor.swift; sourceTree = "<group>"; };
+        000000000000000000000214 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadGeometryTests.swift; sourceTree = "<group>"; };
 		000000000000000000000201 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAvatarApp.swift; sourceTree = "<group>"; };
 		000000000000000000000202 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		000000000000000000000203 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraDevice.swift; sourceTree = "<group>"; };
@@ -54,7 +64,7 @@
 		};
 		000000000000000000000011 = {
 			isa = PBXGroup;
-			children = (000000000000000000000201, 000000000000000000000202, 000000000000000000000012, 000000000000000000000209, 000000000000000000000210);
+			children = (000000000000000000000201, 000000000000000000000202, 000000000000000000000012, 000000000000000000000015, 000000000000000000000209, 000000000000000000000210);
 			path = AIAvatar;
 			sourceTree = "<group>";
 		};
@@ -66,7 +76,7 @@
 		};
 		000000000000000000000013 = {
 			isa = PBXGroup;
-			children = (000000000000000000000207, 000000000000000000000208);
+			children = (000000000000000000000207, 000000000000000000000208, 000000000000000000000214);
 			path = AIAvatarTests;
 			sourceTree = "<group>";
 		};
@@ -77,6 +87,7 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+        000000000000000000000015 = {isa = PBXGroup; children = (000000000000000000000211, 000000000000000000000212, 000000000000000000000213, 000000000000000000000215); path = Processing; sourceTree = "<group>"; };
 
 /* Begin PBXNativeTarget section */
 		000000000000000000000401 = {
@@ -137,13 +148,13 @@
 		000000000000000000000501 = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = (000000000000000000000101, 000000000000000000000102, 000000000000000000000103, 000000000000000000000104, 000000000000000000000105, 000000000000000000000106);
+			files = (000000000000000000000101, 000000000000000000000102, 000000000000000000000103, 000000000000000000000104, 000000000000000000000105, 000000000000000000000106, 000000000000000000000109, 000000000000000000000110, 000000000000000000000111, 000000000000000000000113);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		000000000000000000000504 = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = (000000000000000000000107, 000000000000000000000108);
+			files = (000000000000000000000107, 000000000000000000000108, 000000000000000000000112);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */

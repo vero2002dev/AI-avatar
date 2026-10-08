@@ -41,6 +41,7 @@ struct CameraSnapshot: Equatable, Sendable {
 final class CameraCapture: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     @Published private(set) var snapshot = CameraSnapshot()
     let session = AVCaptureSession()
+    let processor = FrameProcessor()
 
     private let sessionQueue = DispatchQueue(label: "dev.vero2002.aiavatar.capture", qos: .userInitiated)
     private let videoOutput = AVCaptureVideoDataOutput()
@@ -305,6 +306,7 @@ final class CameraCapture: NSObject, ObservableObject, AVCaptureVideoDataOutputS
     }
 
     private func resetMetrics() {
+        processor.reset()
         frameRate.reset()
         lastFrameTime = nil
         sessionStartTime = nil
@@ -406,6 +408,7 @@ final class CameraCapture: NSObject, ObservableObject, AVCaptureVideoDataOutputS
               CMSampleBufferDataIsReady(sampleBuffer),
               let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let now = ProcessInfo.processInfo.systemUptime
+        processor.submit(pixelBuffer, at: now)
         lastFrameTime = now
         let changedPhase = current.phase != .live
         current.phase = .live

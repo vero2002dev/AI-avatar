@@ -60,10 +60,13 @@ struct ContentView: View {
             }
             .padding(12)
 
+            ProcessingControls(processor: camera.processor)
+
             ZStack {
                 Color.black
                 CameraPreviewView(session: camera.session)
                     .opacity(state.phase == .live ? 1 : 0)
+                ProcessedPreview(processor: camera.processor, visible: state.phase == .live)
                 if state.phase != .live {
                     VStack(spacing: 14) {
                         Image(systemName: "video").font(.system(size: 32)).foregroundStyle(.white.opacity(0.7))
@@ -112,7 +115,7 @@ struct ContentView: View {
             .padding(12)
         }
         .frame(minWidth: 760, minHeight: 500)
-        .onAppear { camera.start() }
+        .onAppear { camera.start(); camera.processor.prepare() }
         .onDisappear { camera.stop() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { camera.refreshDevices() }
@@ -131,5 +134,49 @@ struct ContentView: View {
     private func openCameraSettings() {
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera") else { return }
         NSWorkspace.shared.open(url)
+    }
+}
+
+private struct ProcessingControls: View {
+    @ObservedObject var processor: FrameProcessor
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Picker("Video", selection: Binding(get: { processor.snapshot.active }, set: { processor.setEnabled($0) })) {
+                Text("Original").tag(false)
+                Text("AI Identity").tag(true)
+            }
+            .pickerStyle(.segmented).labelsHidden().frame(width: 180).disabled(!processor.snapshot.ready)
+            Button { importReference() } label: { Image(systemName: "photo.badge.plus") }
+                .help("Import the fixed identity reference")
+            Text(processor.snapshot.status).font(.callout).foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+            if processor.snapshot.frames > 0 && processor.snapshot.active {
+                Text(String(format: "AI %.1f FPS | %.0f ms | %.0f MB GPU peak", processor.snapshot.framesPerSecond, processor.snapshot.milliseconds, processor.snapshot.memoryMB))
+                    .font(.caption.monospacedDigit())
+            }
+        }
+        .padding(.horizontal, 12).padding(.bottom, 12)
+    }
+
+    private func importReference() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.jpeg, .png, .heic]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.begin { response in
+            if response == .OK, let url = panel.url { processor.importReference(url) }
+        }
+    }
+}
+
+private struct ProcessedPreview: View {
+    @ObservedObject var processor: FrameProcessor
+    let visible: Bool
+    var body: some View {
+        if visible, processor.snapshot.active, let image = processor.snapshot.image {
+            Image(decorative: image, scale: 1).resizable().aspectRatio(contentMode: .fit)
+                .frame(maxWidth: .infinity, maxHeight: .infinity).background(.black)
+        }
     }
 }

@@ -1,43 +1,57 @@
-# Realtime Processing Architecture
+# Realtime Architecture
 
-## Milestone Gate
+## Current Path
 
-The current app captures and previews unmodified camera video. The first processing pass begins only after the native build/tests and real Mac/iPhone camera checks pass. None of the future classes below exists as a no-op effect in the application.
+AVFoundation -> bounded FrameProcessor -> Vision face ROI -> local MLX
+FaceIdentityProcessor -> Vision HeadHairProcessor -> Core Image/Metal composition
+-> native processed preview.
 
-## Frame Ownership and Budget
+Matched reference/driving crops feed cached appearance and live pose/expression
+extraction. Implicit 3D keypoints drive stitching, neural warping and SPADE
+decoding. Scale/position come from the camera ROI. The generated head is segmented
+and trimmed below the neck, then composited on the matching **camera frame**.
+Source-photo body/background is never the output body/background.
 
-`CameraCapture` already provides NV12-first `CMSampleBuffer` delivery and discards late frames. Introduce a separate processing queue with one in-flight frame and at most one pending newest frame. Never enqueue an unbounded series of frames or execute model inference on the capture/configuration queue.
+## Ownership and Budget
 
-Retain the sample/pixel buffer until its GPU command buffer completes, reuse `CVMetalTextureCache`, texture pools and a single CoreML model instance, and publish frames with camera generation and timestamps. Drop results from a previous camera generation after switching. Preserve color space/range and source aspect ratio during compositing.
+- Capture/configuration and inference have separate serial queues.
+- One retained read-only pixel buffer in flight; busy frames dropped, no backlog.
+- Switch/stop/restart invalidates generation; obsolete results cannot publish.
+- One Metal Core Image context, one segmentation request, one loaded renderer. Appearance extractor released after source preparation; MLX allocation cache capped at 128 MB.
+- Local framed stdin/stdout: little-endian uint32 JSON size, bounded header and fixed RGB payload, matched response ID. Logs on stderr; no server/network.
+- Startup/frame timeouts terminate stuck helper. Helper exits if its parent disappears.
+- Bundled interpreter is signed with sandbox inheritance; weights in bundle, identity in private container. No expanded home-directory access.
+- Tracking/error fallback explicitly displays original. AI timing/FPS is distinct from capture FPS.
 
-Start with 720p camera capture, lower-resolution tracking/segmentation and face/head ROIs. Quality decisions must follow measured GPU duration, delivery rate and memory, with hysteresis to avoid oscillation. A 30 FPS stream has a 33.3 ms frame interval; this is a target, not a demonstrated inference budget. Measure resident memory with Instruments on the actual 8 GB machine before enabling a model.
+Current model is far outside the 33.3 ms 30 FPS budget. Frame dropping/raw preview
+at 30 FPS is not realtime inference. Output updates at processing speed; displayed
+processing duration includes tracking/copies/inference/segmentation/composition.
 
-## Planned Components
+## Boundaries
 
-| Component | Responsibility | Required evidence |
-| --- | --- | --- |
-| CameraCapture | Native permission/discovery/capture, input switching and event recovery | Physical camera checklist |
-| FrameProcessor | Bounded scheduler, frame timestamps/generation, quality control and shared Metal resources | Synthetic backpressure/generation tests and hardware timings |
-| FaceIdentityProcessor | Vision landmarks/pose, licensed CoreML identity inference in a tracked ROI, expression/lighting-aware composition | Correct identity data, model license, pose/expression/occlusion tests |
-| HeadHairProcessor | Head segmentation and pose; tracked finger-coil geometry or neural head renderer | View-consistent silhouette, realistic occlusion and temporal tests |
-| SkinToneProcessor | Semantic skin mask, luminance/texture-preserving chroma mapping to fixed chocolate tone | Face/hands/torso consistency under changing illumination |
-| TattooProtectionProcessor | Explicit protected tattoo regions and temporally tracked mask | Tattoo detail/color comparisons before and after tone/body processing |
-| BodyDefinitionProcessor | Tracked torso ROI, subtle local contrast/shading on the actual body | Motion, clothing and tattoo preservation checks |
-| TemporalStabilizer | Motion-compensated masks/pose/tone confidence smoothing | Low ghosting and stable occlusion recovery without a large frame buffer |
-| OutputPipeline | Processed preview and real OBS output transport | Receiving frames in OBS, color/latency and reconnect tests |
+| Component | Current state |
+| --- | --- |
+| CameraCapture | Real capture; Mac tested, Continuity/external pending |
+| FrameProcessor | Bounded scheduling, Vision ROI, generation/error handling |
+| FaceIdentityProcessor | Real persistent IPC to pinned MLX appearance/motion/stitching/warping/decoder |
+| HeadHairProcessor | Generated-head person matte, empty-matte rejection, neck trim, Metal-backed composition; internal debug switch |
+| Temporal stabilization | Expression smoothing/resets; pose/ROI/motion-compensated matte stabilization pending |
+| SkinToneProcessor | Not implemented; needs semantic skin masks, not global RGB heuristics |
+| TattooProtectionProcessor | Not implemented; body remains untouched |
+| BodyDefinitionProcessor | Not implemented; must preserve actual torso motion/ink/clothing |
+| OutputPipeline | Native processed preview only; OBS/Syphon/CMIO pending |
 
-Tracking and protection masks are dependencies, not just sequential image filters. Compute tattoo protection before skin/body modifications, then apply it to both stages. Pass scene lighting and head/body tracking to the relevant processors. Preserve the source background, clothing and unmodified body pixels outside validated masks.
+Missing processors are documented, not no-op effects or fake buttons. UI has
+one fixed reference import and Original/AI diagnostics, no identity library.
 
-## One Identity
+## Next Work
 
-Use one immutable identity configuration: fixed identity model/reference, defined finger coils, chocolate skin tone and conservative torso enhancement. Internal debug flags may disable a processor independently. Do not expose identity selection. Missing weights or unsupported effects must report unavailable, not silently substitute a static overlay.
+1. Validate native RGB orientation, matte/neck alignment, actual expression/rotation and hand occlusions.
+2. Profile warping/decoder, compare lower-resolution features, convert to CoreML/MLX-Swift or use a lighter licensed renderer. Do not load multiple huge models.
+3. Motion-aware pose/ROI/matte stabilization, lighting harmonization and semantic head/hair/skin/hand masks. Multiple photos alone do not produce 3D geometry.
+4. Explicit tattoo protection before tone/torso edits; leave background/clothing untouched.
+5. Physically validate OBS output; a CMIO virtual camera needs its own signed/approved extension.
 
-No identity dataset is present. Training/conversion and license review remain necessary before an actual transformation can be claimed. The M2 memory budget rules out loading several large generators together; validate one compact ROI model first.
-
-## Hair Intermediate Path
-
-Full neural head rendering may not fit the measured budget. The intermediate candidate is a tracked head mesh, real strand/coil geometry, head segmentation, occlusion and camera-aware lighting. This requires person-specific head/hair assets and stable pose; segmentation alone does not generate photorealistic finger coils. Do not promise the intermediate appearance until render comparisons succeed.
-
-## Output
-
-Keep an unmodified capture preview as a diagnostic view and introduce a separate processed renderer. Evaluate Syphon only after checking its license and demonstrating receiving frames in OBS. A virtual camera requires a real Core Media I/O extension and separate signing/install approval; an app button alone does not implement it. 1080p output may composite/upscale lower-resolution inference, subject to measured quality and latency.
+Full Milestone 1 hardware checklist remains incomplete for iPhone/external.
+Processing advanced after real Mac preview/Stop/Start and prior CI passed,
+without claiming untested devices are validated.
